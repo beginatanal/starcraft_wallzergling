@@ -102,6 +102,36 @@ server <- function(input, output, session){
   
   observeEvent({
     input$run
+  }, {
+    req(min())
+    req(gas())
+    plot <- switch(input$choice,
+                   "총 미네랄 비용" = gghistogram(min())+xlab("총 미네랄 비용"),
+                   "총 가스 비용" = gghistogram(gas())+xlab("총 가스 비용"),
+                   "실패 횟수" = gghistogram(fail())+xlab("실패 횟수"),
+    )
+    rtext <- switch(input$choice,
+                    "총 미네랄 비용" = describe(data.frame(mineral=min())),
+                    "총 가스 비용" = describe(data.frame(gas=gas())),
+                    "실패 횟수" = describe(data.frame(fail=fail())),
+    )
+    output$resplot <- renderUI(renderPlot(plot))
+    output$restext <- renderText({
+      mean <- round(rtext[1,"mean"], digits=0)
+      median <- round(rtext[1, "median"], digits=0)
+      se <- rtext[1,"se"]
+      l95 <- round(mean-(1.96*se), digits=0)
+      u95 <- round(mean+(1.96*se), digits=0)
+      mi <- rtext[1,"min"]
+      ma <- rtext[1,"max"]
+      paste0("평균값 : ", mean, "\n", "중간값 : ", median, "\n",
+             "95% 신뢰구간 : ", l95, "~", u95, "\n",
+             "최소값 : ", mi, "\n", "최대값 : ", ma)
+    })
+    
+  })
+  
+  observeEvent({
     input$choice
   }, {
     req(min())
